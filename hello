@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>BuyHatke - Compare Prices</title>
+	<style>
+		:root { --blue: #1769e0; --dark: #17243b; --muted: #68758a; --bg: #f5f8fc; }
+		* { box-sizing: border-box; }
+		body { margin: 0; font-family: Arial, sans-serif; color: var(--dark); background: var(--bg); }
+		header { background: white; border-bottom: 1px solid #e7edf5; }
+		.nav { max-width: 1160px; margin: auto; padding: 18px 22px; display: flex; align-items: center; gap: 30px; }
+		.logo { font-size: 25px; font-weight: 800; color: var(--blue); }
+		.logo span { color: #ff8a00; }
+		nav { margin-left: auto; display: flex; gap: 24px; }
+		nav a { color: var(--muted); text-decoration: none; font-size: 14px; }
+		nav a:hover { color: var(--blue); }
+		.hero { text-align: center; padding: 64px 20px 72px; background: linear-gradient(135deg, #edf5ff, #fff8f0); }
+		h1 { margin: 0 0 12px; font-size: clamp(32px, 5vw, 52px); }
+		.hero p { color: var(--muted); font-size: 18px; margin: 0 auto 28px; }
+		.search { max-width: 680px; margin: auto; display: flex; background: white; padding: 7px; border-radius: 12px; box-shadow: 0 8px 25px #19396d18; }
+		input { flex: 1; border: 0; outline: 0; padding: 14px; font-size: 16px; min-width: 0; }
+		button { border: 0; cursor: pointer; border-radius: 8px; padding: 0 24px; color: white; background: var(--blue); font-weight: bold; }
+		button:hover { background: #0e54bb; }
+		main { max-width: 1160px; margin: auto; padding: 42px 22px; }
+		h2 { margin: 0 0 20px; font-size: 25px; }
+		.features, .products { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+		.card { background: white; padding: 24px; border-radius: 14px; border: 1px solid #e7edf5; }
+		.feature-icon { font-size: 28px; }
+		.card h3 { margin: 12px 0 8px; }
+		.card p { color: var(--muted); line-height: 1.5; margin: 0; }
+		.product { padding: 0 0 18px; overflow: hidden; }
+		.product img { width: 100%; height: 170px; object-fit: cover; background: #edf2f8; }
+		.product-info { padding: 18px; }
+		.price { color: var(--blue); font-size: 21px; font-weight: bold; margin: 10px 0 16px; }
+		.product button { padding: 10px 16px; }
+		footer { padding: 28px; text-align: center; color: var(--muted); background: white; font-size: 14px; }
+		#message { color: var(--blue); margin-top: 16px; min-height: 20px; }
+		@media (max-width: 700px) { nav { display: none; } .features, .products { grid-template-columns: 1fr; } .search { flex-direction: column; gap: 8px; background: transparent; box-shadow: none; } input, .search button { height: 50px; border-radius: 8px; background: white; } .search button { background: var(--blue); } }
+	</style>
+</head>
+<body>
+	<header><div class="nav"><div class="logo">Buy<span>Hatke</span></div><nav><a href="#compare">Compare Prices</a><a href="#deals">Today's Deals</a><a href="#about">About</a></nav></div></header>
+	<section class="hero" id="compare">
+		<h1>Shop smart. Save more.</h1>
+		<p>Compare prices, discover deals, and find the best value online.</p>
+		<form class="search" id="searchForm"><input id="searchInput" aria-label="Search products" placeholder="Search for a product, brand or category" /><button type="submit">Search</button></form>
+		<div id="message"></div>
+	</section>
+	<main>
+		<h2>Why use BuyHatke?</h2>
+		<div class="features"><article class="card"><div class="feature-icon">🔎</div><h3>Compare everywhere</h3><p>See prices from multiple stores in one convenient place.</p></article><article class="card"><div class="feature-icon">💰</div><h3>Find better deals</h3><p>Make confident purchases with transparent price information.</p></article><article class="card"><div class="feature-icon">🔔</div><h3>Track prices</h3><p>Get notified when your favorite products reach your target price.</p></article></div>
+		<h2 id="deals" style="margin-top:48px">Popular deals</h2>
+		<div class="products"><article class="card product"><img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=700&q=80" alt="Wireless headphones"><div class="product-info"><h3>Wireless Headphones</h3><div class="price">From ₹1,299</div><button onclick="showDeal('Wireless Headphones')">View prices</button></div></article><article class="card product"><img src="https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=700&q=80" alt="Laptop"><div class="product-info"><h3>Everyday Laptop</h3><div class="price">From ₹42,990</div><button onclick="showDeal('Everyday Laptop')">View prices</button></div></article><article class="card product"><img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=700&q=80" alt="Smart watch"><div class="product-info"><h3>Smart Watch</h3><div class="price">From ₹2,499</div><button onclick="showDeal('Smart Watch')">View prices</button></div></article></div>
+	</main>
+	<footer id="about">© 2024 BuyHatke · Compare before you buy.</footer>
+	<script>
+		const message = document.getElementById('message');
+		document.getElementById('searchForm').addEventListener('submit', event => {
+			event.preventDefault();
+			const term = document.getElementById('searchInput').value.trim();
+			message.textContent = term ? `Searching the best prices for “${term}”...` : 'Please enter a product to search.';
+		});
+		function showDeal(name) { message.textContent = `Comparing the best prices for ${name}...`; window.scrollTo({ top: 0, behavior: 'smooth' }); }
+	</script>
+</body>
+</html>

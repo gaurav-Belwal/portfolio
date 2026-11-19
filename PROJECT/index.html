@@ -1,0 +1,1803 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DealSense — AI-Powered Smart Deal Finder & Price Tracker</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" hre
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind Configuration for Dark Mode & Custom Font -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar & Subtle Utilities */
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* Hide scrollbar for horizontal category pills on mobile */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Smooth Drawer & Modal Transitions */
+        .drawer-backdrop {
+            transition: opacity 0.25s ease;
+        }
+        .drawer-panel {
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-200 min-h-screen flex flex-col">
+
+    <!-- ==================== STICKY NAVIGATION BAR ==================== -->
+    <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 gap-4">
+                
+                <!-- Brand Logo -->
+                <a href="#" onclick="resetFilters(event)" class="flex items-center gap-2.5 shrink-0 group">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-emerald-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-lg font-extrabold tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">
+                            Deal<span class="text-indigo-600 dark:text-indigo-400">Sense</span>
+                        </span>
+                    </div>
+                </a>
+
+                <!-- Instant Search Bar (Desktop & Tablet) -->
+                <div class="flex-1 max-w-xl hidden sm:block">
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                            <svg class="h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </div>
+                        <input 
+                            type="text" 
+                            id="searchInputDesktop" 
+                            placeholder="Search products, brands, or retailers (e.g., Sony, Notion, OLED)..." 
+                            class="block w-full pl-10 pr-10 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100/80 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
+                        >
+                        <button id="clearSearchDesktop" onclick="clearSearch()" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" aria-label="Clear search">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Utility Controls: Theme Toggle & Watchlist Button -->
+                <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                    <!-- Dark/Light Mode Switch -->
+                    <button 
+                        id="themeToggle" 
+                        onclick="toggleTheme()" 
+                        class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                        aria-label="Toggle Dark Mode"
+                        title="Toggle Dark / Light Theme"
+                    >
+                        <!-- Sun Icon (shown in dark mode) -->
+                        <svg id="sunIcon" class="w-4 h-4 hidden dark:block text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <!-- Moon Icon (shown in light mode) -->
+                        <svg id="moonIcon" class="w-4 h-4 block dark:hidden text-slate-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        </svg>
+                    </button>
+
+                    <!-- Saved Watchlist Button with Counter Badge -->
+                    <button 
+                        onclick="openWatchlistDrawer()" 
+                        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 text-white text-sm font-medium shadow-sm transition-all active:scale-95"
+                    >
+                        <svg class="w-4 h-4 text-emerald-400 dark:text-emerald-200" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"/>
+                        </svg>
+                        <span class="hidden md:inline">Saved Watchlist</span>
+                        <span class="md:hidden">Saved</span>
+                        <span id="watchlistBadge" class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full bg-emerald-500 text-slate-950">
+                            0
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Search Bar -->
+            <div class="pb-3 sm:hidden">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="searchInputMobile" 
+                        placeholder="Search products, brands, or retailers..." 
+                        class="block w-full pl-9 pr-8 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                </div>
+            </div>
+
+            <!-- Category Pills Navigation -->
+            <nav class="flex items-center gap-2 py-2.5 overflow-x-auto no-scrollbar border-t border-slate-100 dark:border-slate-800/80" id="categoryPills" aria-label="Deal Categories">
+                <!-- Populated dynamically via JS -->
+            </nav>
+
+            <!-- Platform Filter Pills Navigation -->
+            <nav class="flex items-center gap-2 py-2 overflow-x-auto no-scrollbar border-t border-slate-100 dark:border-slate-800/60" id="platformPills" aria-label="Shopping Platforms">
+                <!-- Populated dynamically via JS -->
+            </nav>
+        </div>
+    </header>
+
+    <!-- ==================== HERO BANNER & INTELLIGENCE BAR ==================== -->
+    <section class="relative overflow-hidden bg-gradient-to-b from-indigo-50/80 via-white to-slate-50 dark:from-slate-900 dark:via-slate-900/95 dark:to-slate-950 border-b border-slate-200/80 dark:border-slate-800">
+        <!-- Subtle decorative background glow -->
+        <div class="absolute -top-24 right-1/4 w-96 h-96 bg-indigo-500/10 dark:bg-indigo-500/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 left-1/4 w-96 h-96 bg-emerald-500/10 dark:bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 relative">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                
+                <!-- Hero Headline & Subtext -->
+                <div class="max-w-2xl">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-semibold mb-3">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Live AI Price Monitoring Active • 14,280+ SKUs Scanned Today
+                    </div>
+                    <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+                        Stop guessing if a sale is real. <br class="hidden sm:inline">
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-emerald-500 dark:from-indigo-400 dark:to-emerald-400">
+                            Buy at verified historical lows.
+                        </span>
+                    </h1>
+                    <p class="mt-2.5 text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
+                        DealSense analyzes 12-month retailer pricing curves to filter out fake "was" prices and surface genuine, AI-scored price drops.
+                    </p>
+                </div>
+
+                <!-- Quick Stats Cards -->
+                <div class="grid grid-cols-3 gap-2.5 sm:gap-4 shrink-0">
+                    <div class="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
+                        <div class="text-xs font-medium text-slate-500 dark:text-slate-400">Avg. Savings</div>
+                        <div class="mt-1 text-xl sm:text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">34.2%</div>
+                        <div class="mt-0.5 text-[11px] text-slate-400">vs. 90-day median</div>
+                    </div>
+                    <div class="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
+                        <div class="text-xs font-medium text-slate-500 dark:text-slate-400">Price Tracking</div>
+                        <div class="mt-1 text-xl sm:text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">Real-Time</div>
+                        <div class="mt-0.5 text-[11px] text-slate-400">15-min refresh cycle</div>
+                    </div>
+                    <div class="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
+                        <div class="text-xs font-medium text-slate-500 dark:text-slate-400">AI Deal Score</div>
+                        <div class="mt-1 text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">91<span class="text-sm font-semibold text-slate-400">/100</span></div>
+                        <div class="mt-0.5 text-[11px] text-slate-400">Verified accuracy</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== FILTER & SORT CONTROL BAR ==================== -->
+            <div class="mt-7 pt-5 border-t border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                
+                <!-- Left: Verified All-Time Lows Toggle & Result Count -->
+                <div class="flex flex-wrap items-center gap-4">
+                    <label class="inline-flex items-center gap-3 cursor-pointer select-none bg-white dark:bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs hover:border-emerald-500/50 transition-colors">
+                        <div class="relative">
+                            <input type="checkbox" id="atlToggle" class="sr-only peer" onchange="handleAtlToggle()">
+                            <div class="w-10 h-5 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:bg-emerald-500 transition-colors"></div>
+                            <div class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5"></div>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-sm font-semibold text-slate-800 dark:text-slate-200">Verified All-Time Lows Only</span>
+                            <span class="px-1.5 py-0.5 text-[10px] font-bold uppercase rounded bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">ATL</span>
+                        </div>
+                    </label>
+
+                    <span id="resultsCounter" class="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                        Showing 8 deals
+                    </span>
+                </div>
+
+                <!-- Right: Sort Dropdown -->
+                <div class="flex items-center gap-2.5">
+                    <label for="sortSelect" class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                        Sort by:
+                    </label>
+                    <select 
+                        id="sortSelect" 
+                        onchange="handleSortChange()" 
+                        class="w-full sm:w-auto text-sm font-medium rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 cursor-pointer"
+                    >
+                        <option value="score">Highest AI Deal Score</option>
+                        <option value="discount">Biggest Discount (%)</option>
+                        <option value="priceAsc">Lowest Price (₹)</option>
+                        <option value="priceDesc">Highest Price (₹)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== MAIN DEAL GRID ==================== -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Responsive Grid -->
+        <div id="dealsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Deal Cards rendered dynamically via JS -->
+        </div>
+
+        <!-- Empty State (Shown when no deals match filters) -->
+        <div id="emptyState" class="hidden text-center py-16 px-4 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-4">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">No matching deals found</h3>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                Try clearing your search terms, switching categories, or turning off the "All-Time Lows Only" filter.
+            </p>
+            <button onclick="resetFilters()" class="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-colors">
+                Reset All Filters
+            </button>
+        </div>
+    </main>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-700 dark:text-slate-200">DealSense AI</span>
+                <span>•</span>
+                <span>Independent Algorithmic Price Verification</span>
+            </div>
+            <div>
+                Prices and AI scores update automatically every 15 minutes.
+            </div>
+        </div>
+    </footer>
+
+    <!-- ==================== PRICE HISTORY & AI VERDICT MODAL ==================== -->
+    <div id="historyModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <!-- Backdrop -->
+        <div onclick="closeHistoryModal()" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity"></div>
+        
+        <!-- Modal Content Card -->
+        <div class="relative w-full max-w-5xl rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden z-10 animate-[fadeIn_0.2s_ease-out]">
+            <!-- Modal Header -->
+            <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span id="modalCategory" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">Category</span>
+                        <span class="text-slate-300 dark:text-slate-600">•</span>
+                        <span id="modalRetailer" class="text-xs font-medium text-slate-500 dark:text-slate-400">Retailer</span>
+                    </div>
+                    <h2 id="modalTitle" class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-snug">
+                        Product Title
+                    </h2>
+                </div>
+                <button onclick="closeHistoryModal()" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="Close modal">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+                <!-- Product Image Gallery -->
+                <div class="grid gap-4 md:grid-cols-[minmax(0,1.05fr)_minmax(260px,.95fr)]">
+                    <section class="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-slate-100 dark:bg-slate-800">
+                        <img id="modalProductImage" src="" alt="Product preview" class="w-full h-72 sm:h-80 object-cover object-center" />
+                        <div id="modalImageGallery" class="flex gap-2 p-3 border-t border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90">
+                            <!-- Image thumbnails injected via JS -->
+                        </div>
+                    </section>
+
+                    <section class="rounded-2xl border border-slate-200 dark:border-slate-800 p-5 flex flex-col justify-between bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-950">
+                        <div>
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Today’s verified price</span>
+                            <div class="mt-2 flex items-end gap-3 flex-wrap">
+                                <span id="modalCurrentPriceHero" class="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">₹0</span>
+                                <span id="modalOriginalPriceHero" class="text-sm text-slate-400 line-through pb-1">MRP ₹0</span>
+                            </div>
+                            <div class="mt-3 inline-flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/70 dark:border-emerald-500/20 px-3 py-2 text-sm font-bold text-emerald-700 dark:text-emerald-300">
+                                <span id="modalSavingsHero">Save ₹0</span>
+                                <span id="modalDiscountHero" class="text-xs opacity-80">0% OFF</span>
+                            </div>
+                        </div>
+                        <div class="mt-5 rounded-xl bg-slate-100 dark:bg-slate-800 px-3 py-2.5">
+                            <span id="modalBankOffer" class="text-xs font-semibold text-slate-700 dark:text-slate-200"></span>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Key Price Metrics Row -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/70 dark:border-emerald-500/20">
+                        <div class="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Current Deal</div>
+                        <div id="modalCurrentPrice" class="text-lg sm:text-xl font-extrabold text-emerald-700 dark:text-emerald-300 mt-0.5">₹0</div>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700">
+                        <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">90-Day High</div>
+                        <div id="modalHighPrice" class="text-lg sm:text-xl font-bold text-slate-700 dark:text-slate-200 mt-0.5">₹0</div>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700">
+                        <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">90-Day Avg</div>
+                        <div id="modalAvgPrice" class="text-lg sm:text-xl font-bold text-slate-700 dark:text-slate-200 mt-0.5">₹0</div>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200/70 dark:border-indigo-500/20">
+                        <div class="text-[11px] font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">AI Deal Score</div>
+                        <div id="modalScore" class="text-lg sm:text-xl font-extrabold text-indigo-700 dark:text-indigo-300 mt-0.5">96/100</div>
+                    </div>
+                </div>
+
+                <!-- Product Specifications & Multi-Store Price Comparison -->
+                <div class="grid lg:grid-cols-2 gap-4">
+                    <section class="rounded-2xl border border-slate-200 dark:border-slate-800 p-4">
+                        <div class="flex items-center gap-2 mb-3">
+                            <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H5a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-1-8l5 5m0 0l-5 5m5-5H9"/>
+                            </svg>
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Product Specifications</h3>
+                        </div>
+                        <div id="modalSpecifications" class="space-y-2 text-xs"></div>
+                    </section>
+                    <section class="rounded-2xl border border-slate-200 dark:border-slate-800 p-4">
+                        <div class="flex items-center justify-between gap-2 mb-3">
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Compare Prices</h3>
+                            <span class="text-[10px] text-slate-400">Indicative listings</span>
+                        </div>
+                        <div id="modalPlatformPrices" class="space-y-2"></div>
+                    </section>
+                </div>
+
+                <!-- Detailed Interactive Price History SVG Chart -->
+                <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">12-Week Price Trajectory</span>
+                        <span id="modalAtlTag" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                            Verified All-Time Low
+                        </span>
+                    </div>
+                    <div id="modalChartContainer" class="w-full h-48">
+                        <!-- High-res SVG chart injected via JS -->
+                    </div>
+                </div>
+
+                <!-- AI Intelligence Verdict Box -->
+                <div class="rounded-2xl bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-emerald-500/10 border border-indigo-500/20 p-4">
+                    <div class="flex items-center gap-2 text-indigo-700 dark:text-indigo-300 font-bold text-sm mb-1.5">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        DealSense AI Buying Verdict
+                    </div>
+                    <p id="modalVerdict" class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                        AI analysis text goes here.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Modal Footer Actions -->
+            <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <button id="modalWatchlistBtn" onclick="" class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2">
+                    <!-- Dynamic text -->
+                </button>
+                <a id="modalClaimLink" href="#" target="_blank" rel="noopener noreferrer" onclick="showToast('Opening verified store page...')" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold shadow-md shadow-emerald-600/20 transition-all text-center">
+                    Buy on Store →
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SAVED WATCHLIST SLIDE-OVER DRAWER ==================== -->
+    <div id="watchlistDrawer" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-label="Saved Watchlist">
+        <!-- Backdrop -->
+        <div id="drawerBackdrop" onclick="closeWatchlistDrawer()" class="drawer-backdrop fixed inset-0 bg-slate-950/60 backdrop-blur-xs opacity-0"></div>
+        
+        <!-- Slide-over Panel -->
+        <div id="drawerPanel" class="drawer-panel fixed inset-y-0 right-0 w-full max-w-md bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col translate-x-full">
+            <!-- Drawer Header -->
+            <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900 dark:text-white">Saved Watchlist</h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Instant price-drop alerts enabled</p>
+                    </div>
+                </div>
+                <button onclick="closeWatchlistDrawer()" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="Close Watchlist">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Drawer Body (Saved Items) -->
+            <div id="watchlistItemsContainer" class="flex-1 overflow-y-auto p-6 space-y-4">
+                <!-- Populated dynamically via JS -->
+            </div>
+
+            <!-- Drawer Footer Summary -->
+            <div id="watchlistFooter" class="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                <div class="flex items-center justify-between text-sm mb-3">
+                    <span class="text-slate-500 dark:text-slate-400 font-medium">Total Potential Savings:</span>
+                    <span id="watchlistTotalSavings" class="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">₹0</span>
+                </div>
+                <button onclick="clearWatchlist()" class="w-full py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    Clear All Saved Deals
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== TOAST NOTIFICATION ==================== -->
+    <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-all duration-300 translate-y-2">
+        <div class="px-4 py-2.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-semibold shadow-xl flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 dark:bg-emerald-600"></span>
+            <span id="toastMessage">Saved to Watchlist</span>
+        </div>
+    </div>
+
+    <!-- ==================== APPLICATION JAVASCRIPT ==================== -->
+    <script>
+        // -------------------- 0. INR CURRENCY FORMATTER & IMAGE FALLBACK --------------------
+        const formatINR = (amount) => '₹' + Math.round(amount).toLocaleString('en-IN');
+
+        function handleImgError(imgEl, title, category) {
+            imgEl.onerror = null;
+            const shortTitle = title.split(' ').slice(0, 3).join(' ');
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+                <defs>
+                    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#312e81"/>
+                        <stop offset="100%" stop-color="#0f172a"/>
+                    </linearGradient>
+                </defs>
+                <rect width="600" height="400" fill="url(#g)"/>
+                <text x="300" y="185" fill="#a5b4fc" font-family="Inter,sans-serif" font-size="16" font-weight="600" text-anchor="middle">${category.toUpperCase()}</text>
+                <text x="300" y="220" fill="#ffffff" font-family="Inter,sans-serif" font-size="24" font-weight="700" text-anchor="middle">${shortTitle}</text>
+            </svg>`;
+            imgEl.src = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+        }
+
+        const DATES_12W = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'Today'];
+
+        // -------------------- 1. 30 REAL INDIAN E-COMMERCE PRODUCTS --------------------
+        const DEALS_DATA = [
+            {
+                id: 'in-1',
+                title: 'Apple iPhone 15 (128 GB) - Black',
+                category: 'Smartphones & Laptops',
+                retailer: 'Flipkart',
+                currentPrice: 57999,
+                originalPrice: 79900,
+                aiScore: 98,
+                isAllTimeLow: true,
+                bankOffer: '₹3,000 Off on HDFC Bank Credit Cards',
+                image: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.flipkart.com/search?q=Apple+iPhone+15+128GB',
+                priceHistory: [79900, 76900, 74999, 72999, 73900, 69999, 67999, 65999, 64999, 62999, 60999, 57999],
+                dates: DATES_12W,
+                verdict: 'Verified All-Time Low on Flipkart: ₹21,901 below launch MRP. Authentic price drop with zero artificial pre-sale inflation.'
+            },
+            {
+                id: 'in-2',
+                title: 'Samsung Galaxy S24 Ultra 5G AI (Titanium Gray, 256 GB)',
+                category: 'Smartphones & Laptops',
+                retailer: 'Amazon.in',
+                currentPrice: 99999,
+                originalPrice: 134999,
+                aiScore: 96,
+                isAllTimeLow: true,
+                bankOffer: '10% Instant Discount on SBI Credit Cards',
+                image: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.amazon.in/s?k=Samsung+Galaxy+S24+Ultra+5G',
+                priceHistory: [134999, 129999, 129999, 124999, 121999, 119999, 118999, 114999, 112999, 109999, 104999, 99999],
+                dates: DATES_12W,
+                verdict: 'Strong Buy: Drops below the ₹1,00,000 psychological barrier for the first time on Amazon India with full manufacturer warranty.'
+            },
+            {
+                id: 'in-3',
+                title: 'Apple MacBook Air M2 (13.6-inch, 16GB RAM, 256GB SSD) - Midnight',
+                category: 'Smartphones & Laptops',
+                retailer: 'Amazon.in',
+                currentPrice: 79990,
+                originalPrice: 99900,
+                aiScore: 95,
+                isAllTimeLow: true,
+                bankOffer: '₹5,000 Instant Off on ICICI Credit Cards',
+                image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.amazon.in/s?k=Apple+MacBook+Air+M2+16GB',
+                priceHistory: [99900, 99900, 95900, 94900, 92900, 91900, 89990, 88990, 86990, 84990, 82990, 79990],
+                dates: DATES_12W,
+                verdict: 'Best Value Ultrabook: 16GB unified memory base variant at its lowest recorded Indian retail price.'
+            },
+            {
+                id: 'in-4',
+                title: 'Sony WH-1000XM5 Wireless Active Noise Cancelling Headphones',
+                category: 'Audio & Wearables',
+                retailer: 'Amazon.in',
+                currentPrice: 23990,
+                originalPrice: 34990,
+                aiScore: 97,
+                isAllTimeLow: true,
+                bankOffer: '10% Instant Discount on HDFC & Axis Cards',
+                image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.amazon.in/s?k=Sony+WH-1000XM5',
+                priceHistory: [34990, 31990, 29990, 31990, 28990, 29990, 27990, 26990, 27490, 25990, 24990, 23990],
+                dates: DATES_12W,
+                verdict: 'Peak ANC Deal: Historically hovers around ₹27,990–₹29,990. Current ₹23,990 tag is a genuine multi-month low.'
+            },
+            {
+                id: 'in-5',
+                title: 'Nike Air Jordan 1 Low SE Men Sneakers - Varsity Red/White',
+                category: 'Fashion & Footwear',
+                retailer: 'Myntra',
+                currentPrice: 7695,
+                originalPrice: 10795,
+                aiScore: 91,
+                isAllTimeLow: true,
+                bankOffer: '10% Instant Off on Kotak & Myntra Kotak Card',
+                image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.myntra.com/nike-air-jordan-1-low',
+                priceHistory: [10795, 10795, 10795, 9995, 10795, 9495, 9195, 8995, 9495, 8595, 8195, 7695],
+                dates: DATES_12W,
+                verdict: 'Rare Sneaker Markdown: Air Jordan 1 Low colorways rarely drop below ₹8,500 on Myntra. Good size availability right now.'
+            },
+            {
+                id: 'in-6',
+                title: 'Sony PlayStation 5 Slim Console (1TB Disc Edition)',
+                category: 'Gaming & Cameras',
+                retailer: 'Flipkart',
+                currentPrice: 47490,
+                originalPrice: 54990,
+                aiScore: 94,
+                isAllTimeLow: true,
+                bankOffer: '5% Unlimited Cashback on Flipkart Axis Card',
+                image: 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.flipkart.com/search?q=Sony+PlayStation+5+Slim+Disc',
+                priceHistory: [54990, 54990, 54990, 52990, 54990, 51990, 54990, 49990, 52490, 49990, 48990, 47490],
+                dates: DATES_12W,
+                verdict: 'Official Sony India Promo Drop: ₹7,500 flat off MRP—only happens 2–3 times a year during major sales.'
+            },
+            {
+                id: 'in-7',
+                title: 'Dyson V12 Detect Slim Cordless Vacuum Cleaner',
+                category: 'Home & Appliances',
+                retailer: 'Tata CLiQ',
+                currentPrice: 41900,
+                originalPrice: 55900,
+                aiScore: 92,
+                isAllTimeLow: true,
+                bankOffer: '₹3,500 Instant Discount on ICICI Bank Cards',
+                image: 'https://images.unsplash.com/photo-1558317374-067fb5f30001?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.tatacliq.com/search/?searchCategory=all&text=Dyson%20V12',
+                priceHistory: [55900, 55900, 52900, 51900, 52900, 49900, 48900, 47900, 46900, 45900, 43900, 41900],
+                dates: DATES_12W,
+                verdict: 'Verified Luxury Appliance Low: ₹14,000 off MRP on Tata CLiQ Luxury/Electronics with 2-year Dyson India warranty.'
+            },
+            {
+                id: 'in-8',
+                title: 'Apple Watch Series 9 GPS (45mm Midnight Aluminium Case)',
+                category: 'Audio & Wearables',
+                retailer: 'Flipkart',
+                currentPrice: 32999,
+                originalPrice: 44900,
+                aiScore: 93,
+                isAllTimeLow: true,
+                bankOffer: '₹2,500 Off on HDFC Bank Credit EMI',
+                image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.flipkart.com/search?q=Apple+Watch+Series+9+45mm',
+                priceHistory: [44900, 43900, 41900, 41900, 39900, 38900, 37900, 36900, 35900, 34999, 33999, 32999],
+                dates: DATES_12W,
+                verdict: '27% Below MRP: 45mm GPS model priced lower than the 41mm variant’s regular street price.'
+            },
+            {
+                id: 'in-9',
+                title: 'OnePlus 12 (Flowy Emerald, 16GB RAM, 512GB Storage)',
+                category: 'Smartphones & Laptops',
+                retailer: 'Amazon.in',
+                currentPrice: 56999,
+                originalPrice: 69999,
+                aiScore: 90,
+                isAllTimeLow: false,
+                bankOffer: '₹4,000 Instant Discount on ICICI & OneCard',
+                image: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.amazon.in/s?k=OnePlus+12+16GB+512GB',
+                priceHistory: [69999, 69999, 67999, 66999, 64999, 64999, 62999, 61999, 59999, 58999, 55999, 56999],
+                dates: DATES_12W,
+                verdict: 'Solid Flagship Value: ₹13,000 below MRP for the top 16GB/512GB tier; within ₹1,000 of its all-time low.'
+            },
+            {
+                id: 'in-10',
+                title: 'Casio G-Shock GA-2100-1A1DR CasiOak Analog-Digital Watch',
+                category: 'Audio & Wearables',
+                retailer: 'Tata CLiQ',
+                currentPrice: 6895,
+                originalPrice: 9995,
+                aiScore: 89,
+                isAllTimeLow: true,
+                bankOffer: '10% Instant Off on Tata Neu HDFC Card',
+                image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.tatacliq.com/search/?searchCategory=all&text=Casio%20GA-2100',
+                priceHistory: [9995, 9995, 9495, 9495, 8995, 8995, 8495, 8495, 7995, 7695, 7295, 6895],
+                dates: DATES_12W,
+                verdict: 'Genuine Authorized Seller Discount: Iconic stealth-black GA-2100 rarely drops under ₹7,500 from authorized Indian dealers.'
+            },
+            {
+                id: 'in-11',
+                title: 'ASUS ROG Strix G16 (Core i7 13th Gen, 16GB/1TB, RTX 4060)',
+                category: 'Smartphones & Laptops',
+                retailer: 'Flipkart',
+                currentPrice: 109990,
+                originalPrice: 143990,
+                aiScore: 93,
+                isAllTimeLow: true,
+                bankOffer: '₹5,000 Off on SBI & HDFC Credit Cards',
+                image: 'https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.flipkart.com/search?q=ASUS+ROG+Strix+G16+RTX+4060',
+                priceHistory: [143990, 139990, 134990, 132990, 129990, 127990, 124990, 121990, 119990, 116990, 113990, 109990],
+                dates: DATES_12W,
+                verdict: 'Top RTX 4060 Gaming Deal: Full-TGP 140W RTX 4060 with 165Hz display at ₹34,000 off list price.'
+            },
+            {
+                id: 'in-12',
+                title: 'Canon EOS R50 Mirrorless Camera with RF-S 18-45mm Lens',
+                category: 'Gaming & Cameras',
+                retailer: 'Amazon.in',
+                currentPrice: 58990,
+                originalPrice: 75995,
+                aiScore: 91,
+                isAllTimeLow: true,
+                bankOffer: '10% Instant Discount on Axis Bank Cards',
+                image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.amazon.in/s?k=Canon+EOS+R50+18-45mm',
+                priceHistory: [75995, 73990, 71990, 70990, 68990, 67990, 66990, 64990, 63990, 61990, 60490, 58990],
+                dates: DATES_12W,
+                verdict: 'Creator Sweet Spot: Lowest kit price recorded on Amazon India; beats local camera market quotes by ~₹4,000.'
+            },
+            {
+                id: 'in-13',
+                title: 'Adidas Ultraboost Light Running Shoes - Core Black',
+                category: 'Fashion & Footwear',
+                retailer: 'Myntra',
+                currentPrice: 8999,
+                originalPrice: 17999,
+                aiScore: 95,
+                isAllTimeLow: true,
+                bankOffer: 'Extra 10% Off on Myntra Insider + ICICI Cards',
+                image: 'https://images.unsplash.com/photo-1551107696-a4b0c5a0d9a2?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.myntra.com/adidas-ultraboost-light',
+                priceHistory: [17999, 17999, 16199, 15299, 14399, 13499, 12599, 11999, 11499, 10799, 9899, 8999],
+                dates: DATES_12W,
+                verdict: 'Flat 50% Genuine Drop: Verified direct Adidas India seller listing on Myntra with no inflated MRP.'
+            },
+            {
+                id: 'in-14',
+                title: 'DeLonghi Dedica Style EC685.M Pump Espresso Coffee Maker',
+                category: 'Home & Appliances',
+                retailer: 'Amazon.in',
+                currentPrice: 16999,
+                originalPrice: 24990,
+                aiScore: 88,
+                isAllTimeLow: false,
+                bankOffer: '5% Cashback with Amazon Pay ICICI Card',
+                image: 'https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.amazon.in/s?k=DeLonghi+Dedica+EC685',
+                priceHistory: [24990, 23990, 22490, 21990, 21490, 19990, 19490, 18990, 18490, 17999, 16499, 16999],
+                dates: DATES_12W,
+                verdict: 'Great Home Barista Pick: ₹7,991 off MRP and ₹3,500 below its 90-day average selling price.'
+            },
+            {
+                id: 'in-15',
+                title: 'LG 55-inch UR7500 4K Ultra HD Smart LED TV (2024 Model)',
+                category: 'Home & Appliances',
+                retailer: 'Flipkart',
+                currentPrice: 38990,
+                originalPrice: 71990,
+                aiScore: 92,
+                isAllTimeLow: true,
+                bankOffer: '₹3,000 Off on HDFC & Axis Bank Cards',
+                image: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.flipkart.com/search?q=LG+55+inch+UR7500+4K+TV',
+                priceHistory: [71990, 49990, 47990, 46990, 45990, 44990, 43990, 42990, 41990, 40990, 39990, 38990],
+                dates: DATES_12W,
+                verdict: 'Real Street Price Drop: While ₹71,990 is an inflated MRP, its real street average is ₹44,990—saving you ₹6,000 genuinely.'
+            },
+            {
+                id: 'in-16',
+                title: 'JBL Charge 5 Portable Waterproof Bluetooth Speaker (Black)',
+                category: 'Audio & Wearables',
+                retailer: 'Amazon.in',
+                currentPrice: 11999,
+                originalPrice: 18999,
+                aiScore: 87,
+                isAllTimeLow: false,
+                bankOffer: '10% Instant Off on SBI Credit Cards',
+                image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.amazon.in/s?k=JBL+Charge+5+Bluetooth+Speaker',
+                priceHistory: [18999, 15999, 14999, 14999, 14499, 13999, 13999, 13499, 12999, 12499, 11499, 11999],
+                dates: DATES_12W,
+                verdict: 'Solid Audio Buy: Regularly retails at ₹14,999 in India; current ₹11,999 price saves ₹3,000 off real market value.'
+            },
+            {
+                id: 'in-17',
+                title: 'Apple iPad Air M2 11-inch (Wi-Fi, 128GB) - Space Grey',
+                category: 'Smartphones & Laptops',
+                retailer: 'Tata CLiQ',
+                currentPrice: 52900,
+                originalPrice: 59900,
+                aiScore: 90,
+                isAllTimeLow: true,
+                bankOffer: '₹3,000 Instant Off on ICICI Credit Cards',
+                image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.tatacliq.com/search/?searchCategory=all&text=iPad%20Air%20M2%2011',
+                priceHistory: [59900, 59900, 58900, 58900, 57900, 57900, 56900, 55900, 55400, 54900, 53900, 52900],
+                dates: DATES_12W,
+                verdict: 'Lowest Authorized Apple Price: ₹7,000 direct discount before bank cashback on the M2 iPad Air.'
+            },
+            {
+                id: 'in-18',
+                title: 'Ray-Ban Aviator Classic Polarized Sunglasses (RB3025)',
+                category: 'Fashion & Footwear',
+                retailer: 'Tata CLiQ',
+                currentPrice: 6490,
+                originalPrice: 10590,
+                aiScore: 86,
+                isAllTimeLow: true,
+                bankOffer: '10% Instant Discount on HDFC Credit Cards',
+                image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.tatacliq.com/search/?searchCategory=all&text=Ray-Ban%20Aviator%20Polarized',
+                priceHistory: [10590, 10590, 9530, 9530, 8990, 8990, 8490, 7990, 7990, 7490, 6990, 6490],
+                dates: DATES_12W,
+                verdict: 'Authentic Luxottica Listing: 39% off polarized lenses—rarely discounted beyond 20% at optical stores.'
+            },
+            {
+                id: 'in-19',
+                title: 'Keychron K2 V2 Wireless Mechanical Keyboard (RGB Backlight, Brown Switch)',
+                category: 'Gaming & Cameras',
+                retailer: 'Amazon.in',
+                currentPrice: 7499,
+                originalPrice: 9999,
+                aiScore: 88,
+                isAllTimeLow: true,
+                bankOffer: '5% Cashback on Amazon Pay ICICI Card',
+                image: 'https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.amazon.in/s?k=Keychron+K2+V2+Mechanical+Keyboard',
+                priceHistory: [9999, 9499, 9499, 8999, 8999, 8699, 8499, 8499, 8199, 7999, 7799, 7499],
+                dates: DATES_12W,
+                verdict: 'Developer Favorite: Lowest price seen for the hot-swappable RGB aluminium frame edition in India.'
+            },
+            {
+                id: 'in-20',
+                title: 'Bose QuietComfort Ultra Wireless Noise Cancelling Earbuds',
+                category: 'Audio & Wearables',
+                retailer: 'Flipkart',
+                currentPrice: 18999,
+                originalPrice: 25900,
+                aiScore: 91,
+                isAllTimeLow: true,
+                bankOffer: '₹1,750 Off on Axis & Flipkart Axis Cards',
+                image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.flipkart.com/search?q=Bose+QuietComfort+Ultra+Earbuds',
+                priceHistory: [25900, 25900, 24900, 23900, 23900, 22900, 22499, 21999, 21499, 20999, 19999, 18999],
+                dates: DATES_12W,
+                verdict: 'Class-Leading ANC Earbuds: ₹6,901 off MRP—drops below ₹20,000 for the first time in India.'
+            },
+            {
+                id: 'in-21',
+                title: 'Levi’s Men 511 Slim Fit Mid-Rise Stretchable Jeans - Dark Indigo',
+                category: 'Fashion & Footwear',
+                retailer: 'Myntra',
+                currentPrice: 1799,
+                originalPrice: 3599,
+                aiScore: 85,
+                isAllTimeLow: true,
+                bankOffer: 'Extra ₹300 Off on Orders Above ₹2,499',
+                image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.myntra.com/levis-511-slim-fit-jeans',
+                priceHistory: [3599, 3239, 2879, 3239, 2699, 2519, 2519, 2339, 2159, 2159, 1979, 1799],
+                dates: DATES_12W,
+                verdict: 'Flat 50% Wardrobe Staple: Genuine Levi’s 511 core wash at half price with full waist/length availability.'
+            },
+            {
+                id: 'in-22',
+                title: 'Philips Air Fryer HD9252/90 Digital Touch Panel (4.1L, Black)',
+                category: 'Home & Appliances',
+                retailer: 'Amazon.in',
+                currentPrice: 6499,
+                originalPrice: 11995,
+                aiScore: 89,
+                isAllTimeLow: true,
+                bankOffer: '10% Instant Off on HDFC Bank Cards',
+                image: 'https://images.unsplash.com/photo-1585515320310-259814833e62?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.amazon.in/s?k=Philips+Air+Fryer+HD9252',
+                priceHistory: [11995, 8999, 8499, 8799, 8299, 7999, 7999, 7699, 7499, 7199, 6899, 6499],
+                dates: DATES_12W,
+                verdict: 'Kitchen Bestseller Low: Typically sells around ₹7,999–₹8,499; current ₹6,499 saves ₹1,500+ off real average.'
+            },
+            {
+                id: 'in-23',
+                title: 'DJI Mini 4 Pro Fly More Combo Drone with RC 2 Screen Controller',
+                category: 'Gaming & Cameras',
+                retailer: 'Amazon.in',
+                currentPrice: 98990,
+                originalPrice: 119990,
+                aiScore: 90,
+                isAllTimeLow: true,
+                bankOffer: '₹4,000 Instant Off on ICICI Credit EMI',
+                image: 'https://images.unsplash.com/photo-1473968512647-3e447244af8f?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.amazon.in/s?k=DJI+Mini+4+Pro+Fly+More+Combo',
+                priceHistory: [119990, 118990, 116990, 114990, 114990, 112990, 110990, 108990, 106990, 104990, 101990, 98990],
+                dates: DATES_12W,
+                verdict: 'Sub-249g Flagship Drone: Includes 3 batteries, charging hub, and built-in display RC 2 at ₹21,000 off.'
+            },
+            {
+                id: 'in-24',
+                title: 'Dell UltraSharp U2723QE 27-inch 4K UHD IPS Black USB-C Hub Monitor',
+                category: 'Smartphones & Laptops',
+                retailer: 'Flipkart',
+                currentPrice: 44999,
+                originalPrice: 64999,
+                aiScore: 92,
+                isAllTimeLow: true,
+                bankOffer: '₹2,500 Off on SBI & HDFC Credit Cards',
+                image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.flipkart.com/search?q=Dell+U2723QE+27+4K+Monitor',
+                priceHistory: [64999, 58999, 56999, 55999, 54999, 53999, 52999, 51499, 49999, 48499, 46999, 44999],
+                dates: DATES_12W,
+                verdict: 'Pro Productivity Monitor: 2000:1 IPS Black panel + 90W USB-C power delivery at its lowest recorded Indian price.'
+            },
+            {
+                id: 'in-25',
+                title: 'Puma Men Palermo Lth Retro Terrace Sneakers - Navy/Gum',
+                category: 'Fashion & Footwear',
+                retailer: 'Myntra',
+                currentPrice: 4499,
+                originalPrice: 6999,
+                aiScore: 84,
+                isAllTimeLow: false,
+                bankOffer: '10% Instant Discount on Kotak & Axis Cards',
+                image: 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.myntra.com/puma-palermo-sneakers',
+                priceHistory: [6999, 6999, 6299, 6299, 5949, 5599, 5599, 5249, 4899, 4899, 4199, 4499],
+                dates: DATES_12W,
+                verdict: 'Trending Terrace Silhouette: 36% off full-grain leather Palermo sneakers; beats Puma’s own webstore price.'
+            },
+            {
+                id: 'in-26',
+                title: 'Logitech MX Master 3S Wireless Performance Mouse (Graphite)',
+                category: 'Gaming & Cameras',
+                retailer: 'Amazon.in',
+                currentPrice: 7495,
+                originalPrice: 10995,
+                aiScore: 91,
+                isAllTimeLow: true,
+                bankOffer: '5% Cashback on Amazon Pay ICICI Card',
+                image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.amazon.in/s?k=Logitech+MX+Master+3S',
+                priceHistory: [10995, 9995, 9495, 9495, 9195, 8995, 8995, 8695, 8495, 8195, 7895, 7495],
+                dates: DATES_12W,
+                verdict: 'Productivity Benchmark: Rarely dips below ₹8,495 in India; current ₹7,495 is an instant buy for desk setups.'
+            },
+            {
+                id: 'in-27',
+                title: 'Samsonite Evoa Tech 55cm Cabin Hardsided Polycarbonate Trolley',
+                category: 'Fashion & Footwear',
+                retailer: 'Tata CLiQ',
+                currentPrice: 12990,
+                originalPrice: 21500,
+                aiScore: 88,
+                isAllTimeLow: true,
+                bankOffer: '10% Instant Off on ICICI & SBI Cards',
+                image: 'https://images.unsplash.com/photo-1565026057447-bc90a3dceb87?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.tatacliq.com/search/?searchCategory=all&text=Samsonite%20Cabin%20Trolley',
+                priceHistory: [21500, 19350, 18275, 18275, 17200, 16990, 16125, 15490, 14990, 14290, 13690, 12990],
+                dates: DATES_12W,
+                verdict: '40% Off Flagship Luggage: Aero-Trac suspension wheels + integrated TSA lock with 10-year global warranty.'
+            },
+            {
+                id: 'in-28',
+                title: 'Samsung Galaxy Watch 6 Classic LTE (47mm Black, Rotating Bezel)',
+                category: 'Audio & Wearables',
+                retailer: 'Flipkart',
+                currentPrice: 21999,
+                originalPrice: 43999,
+                aiScore: 96,
+                isAllTimeLow: true,
+                bankOffer: '₹2,000 Off on HDFC Bank Credit Cards',
+                image: 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.flipkart.com/search?q=Samsung+Galaxy+Watch+6+Classic+47mm+LTE',
+                priceHistory: [43999, 36999, 34999, 32999, 31999, 29999, 28999, 27999, 26999, 24999, 23499, 21999],
+                dates: DATES_12W,
+                verdict: '50% Off LTE Classic Edition: Stainless steel 47mm rotating bezel LTE model at half its launch price.'
+            },
+            {
+                id: 'in-29',
+                title: 'Marshall Stanmore III Wireless Home Bluetooth Speaker - Cream',
+                category: 'Audio & Wearables',
+                retailer: 'Tata CLiQ',
+                currentPrice: 31999,
+                originalPrice: 41999,
+                aiScore: 87,
+                isAllTimeLow: true,
+                bankOffer: '₹2,500 Instant Off on Tata Neu HDFC Card',
+                image: 'https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.tatacliq.com/search/?searchCategory=all&text=Marshall%20Stanmore%20III',
+                priceHistory: [41999, 39999, 38999, 38999, 37999, 36999, 36999, 35999, 34999, 33999, 32999, 31999],
+                dates: DATES_12W,
+                verdict: 'Iconic Living Room Audio: Authorized Indian distributor stock at ₹10,000 off MRP.'
+            },
+            {
+                id: 'in-30',
+                title: 'Allen Solly Men Slim Fit Pure Cotton Formal Blazer - Navy Blue',
+                category: 'Fashion & Footwear',
+                retailer: 'Myntra',
+                currentPrice: 3599,
+                originalPrice: 6999,
+                aiScore: 83,
+                isAllTimeLow: true,
+                bankOffer: '10% Instant Off on Axis & ICICI Credit Cards',
+                image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=700&q=80',
+                url: 'https://www.myntra.com/allen-solly-men-blazer',
+                priceHistory: [6999, 6299, 5599, 5599, 5249, 4899, 4899, 4549, 4199, 4199, 3849, 3599],
+                dates: DATES_12W,
+                verdict: '49% Seasonal Markdown: Verified Myntra direct brand listing with all standard chest sizes (38–44) in stock.'
+            }
+        ];
+
+        const CATEGORIES = [
+            'All Deals',
+            'Smartphones & Laptops',
+            'Audio & Wearables',
+            'Fashion & Footwear',
+            'Home & Appliances',
+            'Gaming & Cameras'
+        ];
+
+        const PLATFORMS = [
+            'All Platforms',
+            'Amazon.in',
+            'Flipkart',
+            'Myntra',
+            'Tata CLiQ'
+        ];
+
+        // Build a one-click search link for the same product on every supported store.
+        // The selected deal's existing URL is retained so the currently listed offer opens
+        // directly, while the other links search the exact product title on that platform.
+        function getPlatformUrl(deal, platform) {
+            if (deal.retailer === platform) return deal.url;
+            const query = encodeURIComponent(deal.title);
+            const urls = {
+                'Amazon.in': `https://www.amazon.in/s?k=${query}`,
+                'Flipkart': `https://www.flipkart.com/search?q=${query}`,
+                'Myntra': `https://www.myntra.com/search?q=${query}`,
+                'Tata CLiQ': `https://www.tatacliq.com/search/?searchCategory=all&text=${query}`
+            };
+            return urls[platform];
+        }
+
+        function renderPlatformComparisonLinks(deal) {
+            return PLATFORMS.slice(1).map(platform => `
+                <a href="${getPlatformUrl(deal, platform)}" target="_blank" rel="noopener noreferrer"
+                    onclick="showToast('Opening ${platform} product results...')"
+                    class="flex-1 min-w-[calc(50%-0.25rem)] sm:min-w-0 px-2 py-1.5 rounded-lg border text-[10px] font-bold text-center transition-colors ${platform === deal.retailer ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-indigo-500 dark:hover:text-indigo-300'}"
+                    title="Compare ${deal.title} on ${platform}">${platform.replace('.in', '')}</a>
+            `).join('');
+        }
+
+        // -------------------- 2. APPLICATION STATE --------------------
+        let state = {
+            searchQuery: '',
+            selectedCategory: 'All Deals',
+            selectedPlatform: 'All Platforms',
+            onlyAllTimeLow: false,
+            sortBy: 'score',
+            watchlist: JSON.parse(localStorage.getItem('dealsense_in_watchlist')) || ['in-1', 'in-4', 'in-6']
+        };
+
+        // -------------------- 3. INITIALIZATION --------------------
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            renderCategoryPills();
+            renderPlatformPills();
+            setupSearchListeners();
+            updateWatchlistUI();
+            renderDeals();
+        });
+
+        // -------------------- 4. THEME MANAGEMENT --------------------
+        function initTheme() {
+            const savedTheme = localStorage.getItem('dealsense_theme');
+            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+            const isDark = html.classList.contains('dark');
+            localStorage.setItem('dealsense_theme', isDark ? 'dark' : 'light');
+        }
+
+        // -------------------- 5. SEARCH, FILTER & SORT HANDLERS --------------------
+        function setupSearchListeners() {
+            const desktopInput = document.getElementById('searchInputDesktop');
+            const mobileInput = document.getElementById('searchInputMobile');
+            const clearBtn = document.getElementById('clearSearchDesktop');
+
+            const handleInput = (val) => {
+                state.searchQuery = val.trim().toLowerCase();
+                desktopInput.value = val;
+                mobileInput.value = val;
+                if (val.length > 0) {
+                    clearBtn.classList.remove('hidden');
+                } else {
+                    clearBtn.classList.add('hidden');
+                }
+                renderDeals();
+            };
+
+            desktopInput.addEventListener('input', (e) => handleInput(e.target.value));
+            mobileInput.addEventListener('input', (e) => handleInput(e.target.value));
+        }
+
+        function clearSearch() {
+            state.searchQuery = '';
+            document.getElementById('searchInputDesktop').value = '';
+            document.getElementById('searchInputMobile').value = '';
+            document.getElementById('clearSearchDesktop').classList.add('hidden');
+            renderDeals();
+        }
+
+        function selectCategory(category) {
+            state.selectedCategory = category;
+            renderCategoryPills();
+            renderDeals();
+        }
+
+        function selectPlatform(platform) {
+            state.selectedPlatform = platform;
+            renderPlatformPills();
+            renderDeals();
+        }
+
+        function handleAtlToggle() {
+            state.onlyAllTimeLow = document.getElementById('atlToggle').checked;
+            renderDeals();
+        }
+
+        function handleSortChange() {
+            state.sortBy = document.getElementById('sortSelect').value;
+            renderDeals();
+        }
+
+        function resetFilters(e) {
+            if (e) e.preventDefault();
+            state.searchQuery = '';
+            state.selectedCategory = 'All Deals';
+            state.selectedPlatform = 'All Platforms';
+            state.onlyAllTimeLow = false;
+            state.sortBy = 'score';
+
+            document.getElementById('searchInputDesktop').value = '';
+            document.getElementById('searchInputMobile').value = '';
+            document.getElementById('clearSearchDesktop').classList.add('hidden');
+            document.getElementById('atlToggle').checked = false;
+            document.getElementById('sortSelect').value = 'score';
+
+            renderCategoryPills();
+            renderPlatformPills();
+            renderDeals();
+        }
+
+        // -------------------- 6. RENDER CATEGORY & PLATFORM PILLS --------------------
+        function renderCategoryPills() {
+            const container = document.getElementById('categoryPills');
+            container.innerHTML = CATEGORIES.map(cat => {
+                const isActive = state.selectedCategory === cat;
+                const activeClasses = 'bg-slate-900 text-white dark:bg-indigo-600 dark:text-white shadow-xs';
+                const inactiveClasses = 'bg-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white';
+                
+                return `
+                    <button 
+                        onclick="selectCategory('${cat}')"
+                        class="px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${isActive ? activeClasses : inactiveClasses}"
+                    >
+                        ${cat}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function renderPlatformPills() {
+            const container = document.getElementById('platformPills');
+            container.innerHTML = `<span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mr-1 shrink-0">Store:</span>` + PLATFORMS.map(plat => {
+                const isActive = state.selectedPlatform === plat;
+                const activeClasses = 'bg-emerald-600 text-white shadow-xs';
+                const inactiveClasses = 'bg-slate-100/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-700';
+
+                return `
+                    <button
+                        onclick="selectPlatform('${plat}')"
+                        class="px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${isActive ? activeClasses : inactiveClasses}"
+                    >
+                        ${plat}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function getPlatformBadgeClasses(retailer) {
+            const map = {
+                'Amazon.in': 'bg-amber-500/95 text-slate-950 border-amber-300/40',
+                'Flipkart': 'bg-blue-600/95 text-white border-blue-400/40',
+                'Myntra': 'bg-pink-600/95 text-white border-pink-400/40',
+                'Tata CLiQ': 'bg-rose-700/95 text-white border-rose-400/40'
+            };
+            return map[retailer] || 'bg-slate-900/90 text-white border-white/20';
+        }
+
+        function handleSortChange() {
+            state.sortBy = document.getElementById('sortSelect').value;
+            renderDeals();
+        }
+
+        function resetFilters(e) {
+            if (e) e.preventDefault();
+            state.searchQuery = '';
+            state.selectedCategory = 'All Deals';
+            state.onlyAllTimeLow = false;
+            state.sortBy = 'score';
+
+            document.getElementById('searchInputDesktop').value = '';
+            document.getElementById('searchInputMobile').value = '';
+            document.getElementById('clearSearchDesktop').classList.add('hidden');
+            document.getElementById('atlToggle').checked = false;
+            document.getElementById('sortSelect').value = 'score';
+
+            renderCategoryPills();
+            renderDeals();
+        }
+
+        // -------------------- 6. RENDER CATEGORY PILLS --------------------
+        function renderCategoryPills() {
+            const container = document.getElementById('categoryPills');
+            container.innerHTML = CATEGORIES.map(cat => {
+                const isActive = state.selectedCategory === cat;
+                const activeClasses = 'bg-slate-900 text-white dark:bg-indigo-600 dark:text-white shadow-xs';
+                const inactiveClasses = 'bg-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white';
+                
+                return `
+                    <button 
+                        onclick="selectCategory('${cat}')"
+                        class="px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${isActive ? activeClasses : inactiveClasses}"
+                    >
+                        ${cat}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        // -------------------- 7. SVG SPARKLINE & PRODUCT ICON HELPERS --------------------
+        function generateMiniSparkline(prices, id) {
+            const width = 110;
+            const height = 34;
+            const pad = 4;
+            const min = Math.min(...prices);
+            const max = Math.max(...prices);
+            const range = max - min || 1;
+
+            const points = prices.map((val, idx) => {
+                const x = pad + (idx / (prices.length - 1)) * (width - pad * 2);
+                const y = height - pad - ((val - min) / range) * (height - pad * 2);
+                return `${x.toFixed(1)},${y.toFixed(1)}`;
+            });
+
+            const lastPoint = points[points.length - 1].split(',');
+            const areaPoints = `${pad},${height} ${points.join(' ')} ${width - pad},${height}`;
+
+            return `
+                <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" class="overflow-visible">
+                    <defs>
+                        <linearGradient id="sparkGrad-${id}" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#10b981" stop-opacity="0.28"/>
+                            <stop offset="100%" stop-color="#10b981" stop-opacity="0.0"/>
+                        </linearGradient>
+                    </defs>
+                    <polygon points="${areaPoints}" fill="url(#sparkGrad-${id})" />
+                    <polyline fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${points.join(' ')}" />
+                    <circle cx="${lastPoint[0]}" cy="${lastPoint[1]}" r="3" fill="#10b981" class="stroke-white dark:stroke-slate-900" stroke-width="1.5" />
+                </svg>
+            `;
+        }
+
+        function getProductVisualIcon(type) {
+            const icons = {
+                headphones: `<path stroke-linecap="round" stroke-linejoin="round" d="M3 18v-6a9 9 0 0118 0v6M3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3v5zm18 0a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3v5z"/>`,
+                saas: `<path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>`,
+                tv: `<path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>`,
+                coffee: `<path stroke-linecap="round" stroke-linejoin="round" d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zm4-7v3m4-3v3m4-3v3"/>`,
+                flight: `<path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>`,
+                home: `<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>`,
+                laptop: `<path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>`
+            };
+            return `<svg class="w-10 h-10 text-white/95 drop-shadow-sm" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">${icons[type] || icons.saas}</svg>`;
+        }
+
+        // -------------------- 8. RENDER DEAL CARDS GRID --------------------
+        function renderDeals() {
+            const grid = document.getElementById('dealsGrid');
+            const emptyState = document.getElementById('emptyState');
+            const counter = document.getElementById('resultsCounter');
+
+            // 1. Filter deals
+            let filtered = DEALS_DATA.filter(deal => {
+                const matchesCategory = state.selectedCategory === 'All Deals' || deal.category === state.selectedCategory;
+                const matchesPlatform = state.selectedPlatform === 'All Platforms' || deal.retailer === state.selectedPlatform;
+                const matchesAtl = !state.onlyAllTimeLow || deal.isAllTimeLow;
+                const matchesSearch = !state.searchQuery || 
+                    deal.title.toLowerCase().includes(state.searchQuery) ||
+                    deal.retailer.toLowerCase().includes(state.searchQuery) ||
+                    deal.category.toLowerCase().includes(state.searchQuery) ||
+                    (deal.bankOffer && deal.bankOffer.toLowerCase().includes(state.searchQuery));
+                return matchesCategory && matchesPlatform && matchesAtl && matchesSearch;
+            });
+
+            // 2. Sort deals
+            filtered.sort((a, b) => {
+                const discountA = (a.originalPrice - a.currentPrice) / a.originalPrice;
+                const discountB = (b.originalPrice - b.currentPrice) / b.originalPrice;
+                if (state.sortBy === 'score') return b.aiScore - a.aiScore;
+                if (state.sortBy === 'discount') return discountB - discountA;
+                if (state.sortBy === 'priceAsc') return a.currentPrice - b.currentPrice;
+                if (state.sortBy === 'priceDesc') return b.currentPrice - a.currentPrice;
+                return 0;
+            });
+
+            // Update count label
+            counter.textContent = `Showing ${filtered.length} of ${DEALS_DATA.length} verified Indian deals`;
+
+            // Handle Empty State
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            // 3. Generate HTML for each Deal Card
+            grid.innerHTML = filtered.map(deal => {
+                const discountPct = Math.round(((deal.originalPrice - deal.currentPrice) / deal.originalPrice) * 100);
+                const isSaved = state.watchlist.includes(deal.id);
+                
+                // AI Score Styling
+                const isGreat = deal.aiScore >= 90;
+                const scoreBadgeClasses = isGreat 
+                    ? 'bg-emerald-500/95 text-white shadow-emerald-500/25' 
+                    : 'bg-indigo-600/95 text-white shadow-indigo-500/25';
+                const scoreLabel = isGreat ? 'Great Deal' : 'Good Deal';
+                const platformClasses = getPlatformBadgeClasses(deal.retailer);
+
+                return `
+                    <article class="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/40 hover:-translate-y-1 transition-all duration-200 flex flex-col overflow-hidden">
+                        
+                        <!-- Card Visual Header with Real Product Image & Badges -->
+                        <div class="relative h-48 bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                            <img 
+                                src="${deal.image}" 
+                                alt="${deal.title}" 
+                                loading="lazy"
+                                onerror="handleImgError(this, '${deal.title.replace(/'/g, "\\'")}', '${deal.category}')"
+                                onclick="openHistoryModal('${deal.id}')"
+                                onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openHistoryModal('${deal.id}'); }"
+                                role="button"
+                                tabindex="0"
+                                title="View ${deal.title} details"
+                                class="w-full h-full object-cover object-center cursor-pointer group-hover:scale-105 transition-transform duration-500"
+                            />
+                            <!-- Subtle bottom gradient for crisp badge legibility -->
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-transparent to-slate-950/20 pointer-events-none"></div>
+
+                            <!-- Top-Left: AI Deal Score Badge -->
+                            <div class="absolute top-3 left-3 z-10 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold shadow-md ${scoreBadgeClasses}">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                </svg>
+                                <span>${deal.aiScore}/100 ${scoreLabel}</span>
+                            </div>
+
+                            <!-- Bottom-Left: Platform Badge -->
+                            <div class="absolute bottom-2.5 left-3 z-10 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-extrabold border shadow-sm ${platformClasses}">
+                                <span>${deal.retailer}</span>
+                            </div>
+
+                            <!-- Bottom-Right: Verified All-Time Low Pill -->
+                            ${deal.isAllTimeLow ? `
+                                <div class="absolute bottom-2.5 right-3 z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-950/85 backdrop-blur-xs text-[10px] font-bold text-emerald-300 border border-emerald-400/40">
+                                    <span>✓ ATL</span>
+                                </div>
+                            ` : ''}
+
+                            <!-- Top-Right: Quick Watchlist Bookmark Toggle -->
+                            <button 
+                                onclick="event.stopPropagation(); toggleWatchlist('${deal.id}')" 
+                                class="absolute top-3 right-3 z-10 p-2 rounded-xl bg-slate-950/50 hover:bg-slate-950/75 backdrop-blur-md text-white transition-all active:scale-90"
+                                aria-label="${isSaved ? 'Remove from Watchlist' : 'Save to Watchlist'}"
+                                title="${isSaved ? 'Saved in Watchlist' : 'Save to Watchlist'}"
+                            >
+                                <svg class="w-4 h-4 ${isSaved ? 'text-emerald-400 fill-emerald-400' : 'text-white fill-none'}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Card Content Body -->
+                        <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between">
+                            <div>
+                                <!-- Category Tag -->
+                                <div class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 mb-1 truncate">
+                                    ${deal.category}
+                                </div>
+
+                                <!-- Indian Bank / Card Offer Pill -->
+                                ${deal.bankOffer ? `
+                                    <div class="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200/80 dark:border-amber-500/20 text-[11px] font-medium text-amber-800 dark:text-amber-300">
+                                        <svg class="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                        </svg>
+                                        <span class="line-clamp-1">${deal.bankOffer}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+
+                            <!-- Pricing & Mini Price-History Sparkline -->
+                            <div class="mt-4 pt-3.5 border-t border-slate-100 dark:border-slate-800/80">
+                                <div class="flex items-end justify-between gap-2">
+                                    <div>
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            <span class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">${formatINR(deal.currentPrice)}</span>
+                                            <span class="px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-extrabold">
+                                                -${discountPct}%
+                                            </span>
+                                        </div>
+                                        <div class="text-xs text-slate-400 mt-0.5">
+                                            MRP <span class="line-through">${formatINR(deal.originalPrice)}</span>
+                                        </div>
+                                        <!-- Model name and specifications, kept together like marketplace listings -->
+                                        <h3 class="mt-2 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 leading-snug line-clamp-2">
+                                            ${deal.title}
+                                        </h3>
+                                        <!-- Compact specifications fill the desktop card space below the price. -->
+                                        <div class="hidden lg:block mt-2 space-y-1 text-[10px] text-slate-500 dark:text-slate-400">
+                                            ${getProductSpecifications(deal).slice(1, 3).map(([label, value]) => `
+                                                <div class="flex gap-1.5 truncate">
+                                                    <span class="font-semibold text-slate-600 dark:text-slate-300">${label}:</span>
+                                                    <span class="truncate">${value}</span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+
+                                    <!-- Mini Inline SVG Sparkline -->
+                                    <div class="flex flex-col items-end shrink-0">
+                                        ${generateMiniSparkline(deal.priceHistory, deal.id)}
+                                        <span class="text-[10px] font-medium text-slate-400 mt-0.5">90d trend</span>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons Row -->
+                                <div class="mt-4 flex items-center gap-2">
+                                    <button 
+                                        onclick="openHistoryModal('${deal.id}')" 
+                                        class="flex-1 py-2 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 text-slate-800 dark:text-slate-200 text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+                                    >
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+                                        </svg>
+                                        View Details
+                                    </button>
+                                    
+                                    <a 
+                                        href="${deal.url}" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        class="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-colors shrink-0"
+                                        title="View on ${deal.retailer}"
+                                    >
+                                        Buy ↗
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        // -------------------- 9. INTERACTIVE PRICE HISTORY MODAL --------------------
+        function openHistoryModal(dealId) {
+            const deal = DEALS_DATA.find(d => d.id === dealId);
+            if (!deal) return;
+
+            const highPrice = Math.max(...deal.priceHistory);
+            const avgPrice = Math.round(deal.priceHistory.reduce((a, b) => a + b, 0) / deal.priceHistory.length);
+
+            document.getElementById('modalCategory').textContent = deal.category;
+            document.getElementById('modalRetailer').textContent = deal.retailer;
+            document.getElementById('modalTitle').textContent = deal.title;
+            document.getElementById('modalCurrentPrice').textContent = formatINR(deal.currentPrice);
+            document.getElementById('modalHighPrice').textContent = formatINR(highPrice);
+            document.getElementById('modalAvgPrice').textContent = formatINR(avgPrice);
+            document.getElementById('modalCurrentPriceHero').textContent = formatINR(deal.currentPrice);
+            document.getElementById('modalOriginalPriceHero').textContent = `MRP ${formatINR(deal.originalPrice)}`;
+            const savings = deal.originalPrice - deal.currentPrice;
+            const discount = Math.max(0, Math.round((savings / deal.originalPrice) * 100));
+            document.getElementById('modalSavingsHero').textContent = `Save ${formatINR(savings)}`;
+            document.getElementById('modalDiscountHero').textContent = `${discount}% OFF`;
+            document.getElementById('modalBankOffer').textContent = deal.bankOffer || 'Check retailer for the latest available bank offer';
+            renderModalImageGallery(deal);
+            document.getElementById('modalScore').textContent = `${deal.aiScore}/100`;
+            document.getElementById('modalVerdict').textContent = deal.verdict;
+            renderProductSpecifications(deal);
+            renderModalPlatformPrices(deal);
+
+            const claimLink = document.getElementById('modalClaimLink');
+            claimLink.href = deal.url;
+            claimLink.textContent = `Buy on ${deal.retailer} →`;
+
+            const atlTag = document.getElementById('modalAtlTag');
+            if (deal.isAllTimeLow) {
+                atlTag.textContent = '✓ Verified All-Time Low';
+                atlTag.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300';
+            } else {
+                atlTag.textContent = 'Below 90-Day Median';
+                atlTag.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/15 text-indigo-700 dark:text-indigo-300';
+            }
+
+            // Render Detailed Interactive SVG Chart
+            document.getElementById('modalChartContainer').innerHTML = renderDetailedChart(deal);
+
+            // Configure Modal Watchlist Button
+            updateModalWatchlistButton(deal.id);
+
+            const modal = document.getElementById('historyModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function getProductSpecifications(deal) {
+            const title = deal.title.toLowerCase();
+            if (deal.category === 'Smartphones & Laptops') {
+                if (title.includes('iphone') || title.includes('galaxy') || title.includes('oneplus')) {
+                    return [['Category', 'Smartphone'], ['Model', deal.title], ['Storage / Memory', title.includes('iphone') ? '128 GB' : title.match(/\d+GB/)?.[0] || 'As listed'], ['Warranty', 'Manufacturer warranty']];
+                }
+                return [['Category', 'Laptop / Computer'], ['Model', deal.title], ['Key configuration', title.match(/\d+GB RAM/i)?.[0] || 'As listed'], ['Warranty', 'Manufacturer warranty']];
+            }
+            if (deal.category === 'Audio & Wearables') return [['Category', 'Audio / Wearable'], ['Model', deal.title], ['Connectivity', 'Bluetooth / wireless'], ['Warranty', 'Manufacturer warranty']];
+            if (deal.category === 'Fashion & Footwear') return [['Category', 'Fashion & Footwear'], ['Product', deal.title], ['Availability', 'Check size / colour on store'], ['Seller', 'Verified marketplace listing']];
+            if (deal.category === 'Home & Appliances') return [['Category', 'Home & Appliance'], ['Product', deal.title], ['Features', 'Refer to retailer listing'], ['Warranty', 'Manufacturer warranty']];
+            return [['Category', deal.category], ['Product', deal.title], ['Configuration', 'As listed by retailer'], ['Warranty', 'Check retailer listing']];
+        }
+
+        function renderProductSpecifications(deal) {
+            document.getElementById('modalSpecifications').innerHTML = getProductSpecifications(deal).map(([label, value]) => `
+                <div class="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-2 last:border-0 last:pb-0">
+                    <span class="text-slate-500 dark:text-slate-400">${label}</span>
+                    <span class="text-right font-semibold text-slate-800 dark:text-slate-200">${value}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderModalPlatformPrices(deal) {
+            const prices = PLATFORMS.slice(1).map(platform => {
+                const price = platform === deal.retailer ? deal.currentPrice : Math.round(deal.currentPrice * ({'Amazon.in': 1.02, 'Flipkart': 0.98, 'Myntra': 1.04, 'Tata CLiQ': 1.01}[platform] || 1));
+                return { platform, price, url: getPlatformUrl(deal, platform) };
+            }).sort((a, b) => a.price - b.price);
+            document.getElementById('modalPlatformPrices').innerHTML = prices.map(item => `
+                <a href="${item.url}" target="_blank" rel="noopener noreferrer" onclick="showToast('Opening ${item.platform} product results...')" class="flex items-center justify-between gap-3 rounded-xl bg-slate-50 dark:bg-slate-800/70 px-3 py-2 hover:ring-2 hover:ring-indigo-500/30 transition-all">
+                    <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">${item.platform}</span>
+                    <span class="ml-auto text-sm font-extrabold ${item.platform === deal.retailer ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}">${formatINR(item.price)}</span>
+                    <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">View ↗</span>
+                </a>
+            `).join('');
+        }
+
+        function updateModalWatchlistButton(dealId) {
+            const btn = document.getElementById('modalWatchlistBtn');
+            const isSaved = state.watchlist.includes(dealId);
+            btn.onclick = () => {
+                toggleWatchlist(dealId);
+                updateModalWatchlistButton(dealId);
+            };
+            btn.innerHTML = isSaved 
+                ? `<svg class="w-4 h-4 text-emerald-500 fill-emerald-500" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"/></svg> Saved in Watchlist`
+                : `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg> Add to Watchlist`;
+        }
+
+        function renderModalImageGallery(deal) {
+            const mainImage = document.getElementById('modalProductImage');
+            mainImage.src = deal.image;
+            mainImage.alt = deal.title;
+            mainImage.onerror = () => handleImgError(mainImage, deal.title, deal.category);
+
+            const views = [
+                { label: 'Front view', position: 'object-center' },
+                { label: 'Close view', position: 'object-[68%_center]' },
+                { label: 'Wide view', position: 'object-[32%_center]' }
+            ];
+
+            document.getElementById('modalImageGallery').innerHTML = views.map((view, index) => `
+                <button type="button" onclick="setModalProductImage('${deal.id}', ${index})" class="thumbnail-${index} relative h-16 w-20 shrink-0 overflow-hidden rounded-xl border-2 ${index === 0 ? 'border-indigo-500' : 'border-transparent'} bg-slate-100 dark:bg-slate-800 hover:border-indigo-400 transition-colors" title="${view.label}">
+                    <img src="${deal.image}" alt="${view.label} of ${deal.title}" onerror="handleImgError(this, '${deal.title.replace(/'/g, "\\'")}', '${deal.category}')" class="h-full w-full object-cover ${view.position}" />
+                </button>
+            `).join('');
+        }
+
+        function setModalProductImage(dealId, viewIndex) {
+            const deal = DEALS_DATA.find(d => d.id === dealId);
+            if (!deal) return;
+
+            const positions = ['object-center', 'object-[68%_center]', 'object-[32%_center]'];
+            const mainImage = document.getElementById('modalProductImage');
+            mainImage.src = deal.image;
+            mainImage.alt = `${deal.title} product view ${viewIndex + 1}`;
+            mainImage.className = `w-full h-72 sm:h-80 object-cover ${positions[viewIndex] || positions[0]}`;
+
+            document.querySelectorAll('#modalImageGallery button').forEach((button, index) => {
+                button.classList.toggle('border-indigo-500', index === viewIndex);
+                button.classList.toggle('border-transparent', index !== viewIndex);
+            });
+        }
+
+        function closeHistoryModal() {
+            const modal = document.getElementById('historyModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function renderDetailedChart(deal) {
+            const prices = deal.priceHistory;
+            const dates = deal.dates;
+            const width = 560;
+            const height = 180;
+            const padLeft = 58;
+            const padRight = 24;
+            const padTop = 22;
+            const padBottom = 28;
+
+            const min = Math.min(...prices) * 0.94;
+            const max = Math.max(...prices) * 1.04;
+            const range = max - min || 1;
+
+            const coords = prices.map((val, i) => {
+                const x = padLeft + (i / (prices.length - 1)) * (width - padLeft - padRight);
+                const y = height - padBottom - ((val - min) / range) * (height - padTop - padBottom);
+                return { x, y, val, date: dates[i] };
+            });
+
+            const polylinePoints = coords.map(c => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
+            const areaPoints = `${padLeft},${height - padBottom} ${polylinePoints} ${width - padRight},${height - padBottom}`;
+
+            // Horizontal Y-Axis Gridlines
+            const yLevels = [min, (min + max) / 2, max];
+            const gridLines = yLevels.map(level => {
+                const y = height - padBottom - ((level - min) / range) * (height - padTop - padBottom);
+                return `
+                    <line x1="${padLeft}" y1="${y.toFixed(1)}" x2="${width - padRight}" y2="${y.toFixed(1)}" stroke="currentColor" class="text-slate-200 dark:text-slate-800" stroke-dasharray="4 4" />
+                    <text x="${padLeft - 8}" y="${(y + 4).toFixed(1)}" text-anchor="end" class="fill-slate-400 text-[10px] font-medium">${formatINR(level)}</text>
+                `;
+            }).join('');
+
+            // Data Points & X-Axis Labels
+            const pointsMarkup = coords.map((c, idx) => {
+                const isLast = idx === coords.length - 1;
+                return `
+                    <g class="group">
+                        <circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${isLast ? 5.5 : 3.2}" fill="${isLast ? '#10b981' : '#6366f1'}" class="stroke-white dark:stroke-slate-900" stroke-width="2" />
+                        <text x="${c.x.toFixed(1)}" y="${height - 8}" text-anchor="middle" class="fill-slate-400 text-[9px] font-medium">${c.date}</text>
+                        <text x="${c.x.toFixed(1)}" y="${(c.y - 10).toFixed(1)}" text-anchor="middle" class="fill-slate-700 dark:fill-slate-200 text-[10px] font-bold ${isLast ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity">
+                            ${formatINR(c.val)}
+                        </text>
+                    </g>
+                `;
+            }).join('');
+
+            return `
+                <svg viewBox="0 0 ${width} ${height}" class="w-full h-full overflow-visible">
+                    <defs>
+                        <linearGradient id="modalAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#6366f1" stop-opacity="0.25"/>
+                            <stop offset="100%" stop-color="#10b981" stop-opacity="0.0"/>
+                        </linearGradient>
+                    </defs>
+                    ${gridLines}
+                    <polygon points="${areaPoints}" fill="url(#modalAreaGrad)" />
+                    <polyline fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${polylinePoints}" />
+                    ${pointsMarkup}
+                </svg>
+            `;
+        }
+
+        // -------------------- 10. SAVED WATCHLIST DRAWER LOGIC --------------------
+        function toggleWatchlist(dealId) {
+            const index = state.watchlist.indexOf(dealId);
+            if (index > -1) {
+                state.watchlist.splice(index, 1);
+                showToast('Removed from Saved Watchlist');
+            } else {
+                state.watchlist.push(dealId);
+                showToast('Saved to Watchlist • Price alerts active');
+            }
+            localStorage.setItem('dealsense_in_watchlist', JSON.stringify(state.watchlist));
+            updateWatchlistUI();
+            renderDeals();
+        }
+
+        function clearWatchlist() {
+            state.watchlist = [];
+            localStorage.setItem('dealsense_in_watchlist', JSON.stringify(state.watchlist));
+            updateWatchlistUI();
+            renderDeals();
+            showToast('Watchlist cleared');
+        }
+
+        function updateWatchlistUI() {
+            const badge = document.getElementById('watchlistBadge');
+            const container = document.getElementById('watchlistItemsContainer');
+            const footer = document.getElementById('watchlistFooter');
+            const totalSavingsEl = document.getElementById('watchlistTotalSavings');
+
+            badge.textContent = state.watchlist.length;
+
+            const savedDeals = DEALS_DATA.filter(d => state.watchlist.includes(d.id));
+
+            if (savedDeals.length === 0) {
+                footer.classList.add('hidden');
+                container.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-center py-12">
+                        <div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mb-3">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Your watchlist is empty</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs">
+                            Bookmark any deal card to track price drops and calculate your total savings.
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            footer.classList.remove('hidden');
+            let totalSavings = 0;
+
+            container.innerHTML = savedDeals.map(deal => {
+                const savings = deal.originalPrice - deal.currentPrice;
+                totalSavings += savings;
+
+                return `
+                    <div class="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-start gap-3">
+                        <img src="${deal.image}" alt="${deal.title}" onerror="handleImgError(this, '${deal.title.replace(/'/g, "\\'")}', '${deal.category}')" class="w-14 h-14 rounded-xl object-cover shrink-0 bg-slate-200 dark:bg-slate-700" />
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 mb-0.5">
+                                <span>${deal.retailer}</span>
+                                <span>•</span>
+                                <span class="text-emerald-600 dark:text-emerald-400">Score ${deal.aiScore}/100</span>
+                            </div>
+                            <h4 class="text-sm font-bold text-slate-900 dark:text-white truncate">${deal.title}</h4>
+                            <div class="mt-1 flex items-baseline gap-2 flex-wrap">
+                                <span class="text-sm font-extrabold text-slate-900 dark:text-white">${formatINR(deal.currentPrice)}</span>
+                                <span class="text-xs text-slate-400 line-through">${formatINR(deal.originalPrice)}</span>
+                                <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">(Save ${formatINR(savings)})</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end gap-2 shrink-0">
+                            <button onclick="toggleWatchlist('${deal.id}')" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors" title="Remove">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                            <button onclick="closeWatchlistDrawer(); openHistoryModal('${deal.id}')" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+                                History →
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            totalSavingsEl.textContent = formatINR(totalSavings);
+        }
+
+        function openWatchlistDrawer() {
+            const drawer = document.getElementById('watchlistDrawer');
+            const backdrop = document.getElementById('drawerBackdrop');
+            const panel = document.getElementById('drawerPanel');
+
+            drawer.classList.remove('hidden');
+            // Trigger reflow for smooth CSS transition
+            void drawer.offsetWidth;
+            backdrop.classList.remove('opacity-0');
+            panel.classList.remove('translate-x-full');
+        }
+
+        function closeWatchlistDrawer() {
+            const drawer = document.getElementById('watchlistDrawer');
+            const backdrop = document.getElementById('drawerBackdrop');
+            const panel = document.getElementById('drawerPanel');
+
+            backdrop.classList.add('opacity-0');
+            panel.classList.add('translate-x-full');
+            setTimeout(() => {
+                drawer.classList.add('hidden');
+            }, 300);
+        }
+
+        // -------------------- 11. TOAST HELPER & KEYBOARD ESCAPE --------------------
+        let toastTimer;
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = message;
+            toast.classList.remove('opacity-0', 'translate-y-2');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+            }, 2400);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeHistoryModal();
+                closeWatchlistDrawer();
+            }
+        });
+    </script>
+    <script src="project.js"></script>
+</body>
+</html>
